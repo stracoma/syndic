@@ -109,6 +109,8 @@ class _MyHomePageState extends State<MyHomePage> {
     Personne(nom: "Slaoui", prenom: "Kamal", numero: 49, moisPaye: DateTime(2028, 1)),
   ];
 
+  final TextEditingController _passwordController = TextEditingController();
+  final String _adminPassword = "admin"; // Remplacez ceci par votre mot de passe réel
   int? _selectedNumero;
   Personne? _selectedPersonne;
   List<int> _numeros = List.generate(49, (index) => index + 1);
@@ -133,29 +135,78 @@ class _MyHomePageState extends State<MyHomePage> {
   Future<void> _modifierMoisPaye(BuildContext context) async {
     if (_selectedPersonne == null) return;
 
-    final DateTime? pickedDate = await showDatePicker(
+    // Afficher la boîte de dialogue pour le mot de passe
+    final bool? isPasswordValid = await showDialog<bool>(
       context: context,
-      initialDate: _selectedPersonne!.moisPaye ?? DateTime.now(),
-      firstDate: DateTime(2000),
-      lastDate: DateTime(2100),
-      locale: const Locale('fr', 'FR'),
+      builder: (context) {
+        return AlertDialog(
+          title: const Text("Mot de passe requis"),
+          content: TextField(
+            controller: _passwordController,
+            obscureText: true,
+            decoration: const InputDecoration(labelText: "Mot de passe"),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(false); // Retourne false si annulé
+              },
+              child: const Text("Annuler"),
+            ),
+            TextButton(
+              onPressed: () {
+                if (_passwordController.text == _adminPassword) {
+                  Navigator.of(context).pop(true); // Retourne true si correct
+                } else {
+                  // Afficher un message d'erreur (facultatif)
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text("Mot de passe incorrect."),
+                      duration: Duration(seconds: 2),
+                    ),
+                  );
+                }
+                _passwordController.clear(); // Efface le mot de passe après vérification
+              },
+              child: const Text("Confirmer"),
+            ),
+          ],
+        );
+      },
     );
 
-    if (pickedDate != null) {
-      setState(() {
-        _selectedPersonne!.moisPaye = pickedDate;
-        // Mettre à jour la personne dans la liste _personnes
-        int index = _personnes.indexWhere((p) => p.numero == _selectedPersonne!.numero);
-        if (index != -1) {
-          _personnes[index] = Personne(
-            nom: _selectedPersonne!.nom,
-            prenom: _selectedPersonne!.prenom,
-            numero: _selectedPersonne!.numero,
-            moisPaye: pickedDate,
-          );
-        }
-      });
+    if (isPasswordValid == true) {
+      // Si le mot de passe est correct, afficher le DatePicker
+      final DateTime? pickedDate = await showDatePicker(
+        context: context,
+        initialDate: _selectedPersonne!.moisPaye ?? DateTime.now(),
+        firstDate: DateTime(2000),
+        lastDate: DateTime(2100),
+        locale: const Locale('fr', 'FR'),
+      );
+
+      if (pickedDate != null) {
+        setState(() {
+          _selectedPersonne!.moisPaye = pickedDate;
+          // Mettre à jour la personne dans la liste _personnes
+          int index = _personnes.indexWhere((p) => p.numero == _selectedPersonne!.numero);
+          if (index != -1) {
+            _personnes[index] = Personne(
+              nom: _selectedPersonne!.nom,
+              prenom: _selectedPersonne!.prenom,
+              numero: _selectedPersonne!.numero,
+              moisPaye: pickedDate,
+            );
+          }
+        });
+      }
     }
+  }
+
+  @override
+  void dispose() {
+    _passwordController.dispose(); // Important : libérer les ressources du contrôleur
+    super.dispose();
   }
 
   @override
@@ -206,57 +257,9 @@ class _MyHomePageState extends State<MyHomePage> {
                 const SizedBox(height: 20),
                 ElevatedButton(
                   onPressed: () {
-                    showDialog(
-                      context: context,
-                      builder: (context) {
-                        return AlertDialog( // Utilisez AlertDialog ici
-                          title: const Text("Modifier le mois payé"),
-                          content: ElevatedButton(
-                            onPressed: () async {
-                              final DateTime? pickedDate = await showDatePicker(
-                                context: context,
-                                initialDate: _selectedPersonne?.moisPaye ?? DateTime.now(),
-                                firstDate: DateTime(2000),
-                                lastDate: DateTime(2100),
-                                locale: const Locale('fr', 'FR'),
-                              );
-                              if (pickedDate != null) {
-                                setState(() {
-                                  _selectedPersonne!.moisPaye = pickedDate;
-                                  int index = _personnes.indexWhere((p) => p.numero == _selectedPersonne!.numero);
-                                  if (index != -1) {
-                                    _personnes[index] = Personne(
-                                      nom: _selectedPersonne!.nom,
-                                      prenom: _selectedPersonne!.prenom,
-                                      numero: _selectedPersonne!.numero,
-                                      moisPaye: pickedDate,
-                                    );
-                                  }
-                                });
-                                Navigator.of(context).pop(); // Fermer l'alerte après la mise à jour
-                              }
-                            },
-                            child: const Text('Choisir une date'), // Texte du bouton dans l'alerte
-                          ),
-                          actions: [
-                            TextButton(
-                              onPressed: () {
-                                Navigator.of(context).pop(); // Fermer l'alerte
-                              },
-                              child: const Text("Annuler"),
-                            ),
-                            TextButton(
-                              onPressed: () {
-                                // L'action de confirmation est gérée dans le onPressed du ElevatedButton
-                              },
-                              child: const Text("Confirmer"),
-                            ),
-                          ],
-                        );
-                      },
-                    );
+                    _modifierMoisPaye(context);
                   },
-                  child: const Text('Modifier le mois payé'), // Texte du bouton d'origine
+                  child: const Text('Modifier le mois payé'),
                 ),
               ] else if (_selectedNumero != null) ...[
                 const Text('Aucune information pour ce numéro.'),
