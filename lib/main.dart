@@ -2,10 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'personne.dart';
+import 'creerPersonne.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await initializeDateFormatting('fr_FR');
+  await Firebase.initializeApp();
   runApp(const MyApp());
 }
 
@@ -34,20 +39,6 @@ class MyApp extends StatelessWidget {
   }
 }
 
-class Personne {
-  String nom;
-  String prenom;
-  int numero;
-  DateTime? moisPaye;
-
-  Personne({
-    required this.nom,
-    required this.prenom,
-    required this.numero,
-    this.moisPaye,
-  });
-}
-
 class MyHomePage extends StatefulWidget {
   const MyHomePage({super.key});
 
@@ -56,86 +47,54 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  // Définition des données des personnes
-  final List<Personne> _personnes = [
-    Personne(nom: "Slaoui1", prenom: "Kamal", numero: 1, moisPaye: DateTime(2024, 1)),
-    Personne(nom: "Malki1", prenom: "Brahim", numero: 2, moisPaye: DateTime(2024, 2)),
-    Personne(nom: "Slaoui2", prenom: "Kamal", numero: 3, moisPaye: DateTime(2024, 3)),
-    Personne(nom: "Malki2", prenom: "Brahim", numero: 4, moisPaye: DateTime(2024, 4)),
-    Personne(nom: "Slaoui3", prenom: "Kamal", numero: 5, moisPaye: DateTime(2024, 5)),
-    Personne(nom: "Malki3", prenom: "Brahim", numero: 6, moisPaye: DateTime(2024, 6)),
-    Personne(nom: "Slaoui4", prenom: "Kamal", numero: 7, moisPaye: DateTime(2024, 7)),
-    Personne(nom: "Malki4", prenom: "Brahim", numero: 8, moisPaye: DateTime(2024, 8)),
-    Personne(nom: "Slaoui5", prenom: "Kamal", numero: 9, moisPaye: DateTime(2024, 9)),
-    Personne(nom: "Malki5", prenom: "Brahim", numero: 10, moisPaye: DateTime(2024, 10)),
-    Personne(nom: "Slaoui6", prenom: "Kamal", numero: 11, moisPaye: DateTime(2024, 11)),
-    Personne(nom: "Malki7", prenom: "Brahim", numero: 12, moisPaye: DateTime(2024, 12)),
-    Personne(nom: "Slaoui7", prenom: "Kamal", numero: 13, moisPaye: DateTime(2025, 1)),
-    Personne(nom: "Malki8", prenom: "Brahim", numero: 14, moisPaye: DateTime(2025, 2)),
-    Personne(nom: "Slaoui8", prenom: "Kamal", numero: 15, moisPaye: DateTime(2025, 3)),
-    Personne(nom: "Malki9", prenom: "Brahim", numero: 16, moisPaye: DateTime(2025, 4)),
-    Personne(nom: "Slaoui10", prenom: "Kamal", numero: 17, moisPaye: DateTime(2025, 5)),
-    Personne(nom: "Malki10", prenom: "Brahim", numero: 18, moisPaye: DateTime(2025, 6)),
-    Personne(nom: "Slaoui", prenom: "Kamal", numero: 19, moisPaye: DateTime(2025, 7)),
-    Personne(nom: "Malki", prenom: "Brahim", numero: 20, moisPaye: DateTime(2025, 8)),
-    Personne(nom: "Slaoui", prenom: "Kamal", numero: 21, moisPaye: DateTime(2025, 9)),
-    Personne(nom: "Malki", prenom: "Brahim", numero: 22, moisPaye: DateTime(2025, 10)),
-    Personne(nom: "Slaoui", prenom: "Kamal", numero: 23, moisPaye: DateTime(2025, 11)),
-    Personne(nom: "Malki", prenom: "Brahim", numero: 24, moisPaye: DateTime(2025, 12)),
-    Personne(nom: "Slaoui", prenom: "Kamal", numero: 25, moisPaye: DateTime(2026, 1)),
-    Personne(nom: "Malki", prenom: "Brahim", numero: 26, moisPaye: DateTime(2026, 2)),
-    Personne(nom: "Slaoui", prenom: "Kamal", numero: 27, moisPaye: DateTime(2026, 3)),
-    Personne(nom: "Malki", prenom: "Brahim", numero: 28, moisPaye: DateTime(2026, 4)),
-    Personne(nom: "Slaoui", prenom: "Kamal", numero: 29, moisPaye: DateTime(2026, 5)),
-    Personne(nom: "Malki", prenom: "Brahim", numero: 30, moisPaye: DateTime(2026, 6)),
-    Personne(nom: "Slaoui", prenom: "Kamal", numero: 31, moisPaye: DateTime(2026, 7)),
-    Personne(nom: "Malki", prenom: "Brahim", numero: 32, moisPaye: DateTime(2026, 8)),
-    Personne(nom: "Slaoui", prenom: "Kamal", numero: 33, moisPaye: DateTime(2026, 9)),
-    Personne(nom: "Malki", prenom: "Brahim", numero: 34, moisPaye: DateTime(2026, 10)),
-    Personne(nom: "Slaoui", prenom: "Kamal", numero: 35, moisPaye: DateTime(2026, 11)),
-    Personne(nom: "Malki", prenom: "Brahim", numero: 36, moisPaye: DateTime(2026, 12)),
-    Personne(nom: "Slaoui", prenom: "Kamal", numero: 37, moisPaye: DateTime(2027, 1)),
-    Personne(nom: "Malki", prenom: "Brahim", numero: 38, moisPaye: DateTime(2027, 2)),
-    Personne(nom: "Slaoui", prenom: "Kamal", numero: 39, moisPaye: DateTime(2027, 3)),
-    Personne(nom: "Malki", prenom: "Brahim", numero: 40, moisPaye: DateTime(2027, 4)),
-    Personne(nom: "Slaoui", prenom: "Kamal", numero: 41, moisPaye: DateTime(2027, 5)),
-    Personne(nom: "Malki", prenom: "Brahim", numero: 42, moisPaye: DateTime(2027, 6)),
-    Personne(nom: "Slaoui", prenom: "Kamal", numero: 43, moisPaye: DateTime(2027, 7)),
-    Personne(nom: "Malki", prenom: "Brahim", numero: 44, moisPaye: DateTime(2027, 8)),
-    Personne(nom: "Slaoui", prenom: "Kamal", numero: 45, moisPaye: DateTime(2027, 9)),
-    Personne(nom: "Malki", prenom: "Brahim", numero: 46, moisPaye: DateTime(2027, 10)),
-    Personne(nom: "Slaoui", prenom: "Kamal", numero: 47, moisPaye: DateTime(2027, 11)),
-    Personne(nom: "Malki", prenom: "Brahim", numero: 48, moisPaye: DateTime(2027, 12)),
-    Personne(nom: "Slaoui", prenom: "Kamal", numero: 49, moisPaye: DateTime(2028, 1)),
-  ];
-
+  final CollectionReference _personnesCollection =
+  FirebaseFirestore.instance.collection('personnes');
   final TextEditingController _passwordController = TextEditingController();
-  final String _adminPassword = "admin"; // Remplacez ceci par votre mot de passe réel
+  final String _adminPassword = "admin";
   int? _selectedNumero;
   Personne? _selectedPersonne;
-  List<int> _numeros = List.generate(49, (index) => index + 1);
+
+  @override
+  void initState() {
+    super.initState();
+  }
 
   Personne? _getPersonne(int numero) {
     try {
-      return _personnes.firstWhere((personne) => personne.numero == numero);
+      return lespersonnes.firstWhere((personne) => personne.numero == numero);
     } catch (e) {
       return null;
     }
   }
 
-  void _afficherPersonne() {
+  void _afficherPersonne() async {
     if (_selectedNumero != null) {
-      Personne? personne = _getPersonne(_selectedNumero!);
-      setState(() {
-        _selectedPersonne = personne;
-      });
+      final snapshot = await _personnesCollection
+          .where('numero', isEqualTo: _selectedNumero)
+          .get();
+      if (snapshot.docs.isNotEmpty) {
+        final data = snapshot.docs.first.data() as Map<String, dynamic>;
+        setState(() {
+          _selectedPersonne = Personne(
+            nom: data['nom'],
+            prenom: data['prenom'],
+            numero: data['numero'],
+            moisPaye: data['moisPaye'] != null
+                ? (data['moisPaye'] as Timestamp).toDate()
+                : null,
+          );
+        });
+      } else {
+        setState(() {
+          _selectedPersonne = null;
+        });
+      }
     }
   }
 
   Future<void> _modifierMoisPaye(BuildContext context) async {
     if (_selectedPersonne == null) return;
 
-    // Afficher la boîte de dialogue pour le mot de passe
     final bool? isPasswordValid = await showDialog<bool>(
       context: context,
       builder: (context) {
@@ -149,16 +108,15 @@ class _MyHomePageState extends State<MyHomePage> {
           actions: [
             TextButton(
               onPressed: () {
-                Navigator.of(context).pop(false); // Retourne false si annulé
+                Navigator.of(context).pop(false);
               },
               child: const Text("Annuler"),
             ),
             TextButton(
               onPressed: () {
                 if (_passwordController.text == _adminPassword) {
-                  Navigator.of(context).pop(true); // Retourne true si correct
+                  Navigator.of(context).pop(true);
                 } else {
-                  // Afficher un message d'erreur (facultatif)
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
                       content: Text("Mot de passe incorrect."),
@@ -166,7 +124,7 @@ class _MyHomePageState extends State<MyHomePage> {
                     ),
                   );
                 }
-                _passwordController.clear(); // Efface le mot de passe après vérification
+                _passwordController.clear();
               },
               child: const Text("Confirmer"),
             ),
@@ -176,7 +134,6 @@ class _MyHomePageState extends State<MyHomePage> {
     );
 
     if (isPasswordValid == true) {
-      // Si le mot de passe est correct, afficher le DatePicker
       final DateTime? pickedDate = await showDatePicker(
         context: context,
         initialDate: _selectedPersonne!.moisPaye ?? DateTime.now(),
@@ -186,26 +143,37 @@ class _MyHomePageState extends State<MyHomePage> {
       );
 
       if (pickedDate != null) {
-        setState(() {
-          _selectedPersonne!.moisPaye = pickedDate;
-          // Mettre à jour la personne dans la liste _personnes
-          int index = _personnes.indexWhere((p) => p.numero == _selectedPersonne!.numero);
-          if (index != -1) {
-            _personnes[index] = Personne(
-              nom: _selectedPersonne!.nom,
-              prenom: _selectedPersonne!.prenom,
-              numero: _selectedPersonne!.numero,
-              moisPaye: pickedDate,
-            );
-          }
-        });
+        try {
+          await _personnesCollection
+              .where('numero', isEqualTo: _selectedPersonne!.numero)
+              .limit(1)
+              .get()
+              .then((snapshot) {
+            if (snapshot.docs.isNotEmpty) {
+              final docId = snapshot.docs.first.id;
+              _personnesCollection.doc(docId).update({'moisPaye': pickedDate});
+            }
+          });
+
+          setState(() {
+            _selectedPersonne!.moisPaye = pickedDate;
+          });
+        } catch (e) {
+          print("Erreur de mise à jour de Firestore: $e");
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text("Erreur de mise à jour: $e"),
+              duration: const Duration(seconds: 5),
+            ),
+          );
+        }
       }
     }
   }
 
   @override
   void dispose() {
-    _passwordController.dispose(); // Important : libérer les ressources du contrôleur
+    _passwordController.dispose();
     super.dispose();
   }
 
@@ -221,23 +189,51 @@ class _MyHomePageState extends State<MyHomePage> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: <Widget>[
-              DropdownButtonFormField<int>(
-                decoration: const InputDecoration(
-                  labelText: 'Sélectionner un numéro',
-                  border: OutlineInputBorder(),
-                ),
-                value: _selectedNumero,
-                items: _numeros.map((numero) {
-                  return DropdownMenuItem<int>(
-                    value: numero,
-                    child: Text(numero.toString()),
+              StreamBuilder<QuerySnapshot>(
+                stream: _personnesCollection.snapshots(),
+                builder: (context, snapshot) {
+                  if (snapshot.hasError) {
+                    return Text('Erreur: ${snapshot.error}');
+                  }
+
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const CircularProgressIndicator();
+                  }
+
+                  List<Personne> personnes = snapshot.data!.docs.map((doc) {
+                    final data = doc.data() as Map<String, dynamic>;
+                    return Personne(
+                      nom: data['nom'],
+                      prenom: data['prenom'],
+                      numero: data['numero'],
+                      moisPaye: data['moisPaye'] != null
+                          ? (data['moisPaye'] as Timestamp).toDate()
+                          : null,
+                    );
+                  }).toList();
+
+                  List<int> numeros =
+                  personnes.map((personne) => personne.numero).toList();
+
+                  return DropdownButtonFormField<int>(
+                    decoration: const InputDecoration(
+                      labelText: 'Sélectionner un numéro',
+                      border: OutlineInputBorder(),
+                    ),
+                    value: _selectedNumero,
+                    items: numeros.map((numero) {
+                      return DropdownMenuItem<int>(
+                        value: numero,
+                        child: Text(numero.toString()),
+                      );
+                    }).toList(),
+                    onChanged: (int? newValue) {
+                      setState(() {
+                        _selectedNumero = newValue;
+                        _selectedPersonne = null;
+                      });
+                    },
                   );
-                }).toList(),
-                onChanged: (int? newValue) {
-                  setState(() {
-                    _selectedNumero = newValue;
-                    _selectedPersonne = null;
-                  });
                 },
               ),
               const SizedBox(height: 20),
@@ -252,7 +248,7 @@ class _MyHomePageState extends State<MyHomePage> {
                 Text('Prénom: ${_selectedPersonne!.prenom}'),
                 const SizedBox(height: 10),
                 Text(
-                  'Dernier mois payé: ${DateFormat('MMMM yyyy', 'fr_FR').format(_selectedPersonne!.moisPaye ?? DateTime.now())}',
+                  'Dernier mois payé: ${DateFormat('MMMM', 'fr_FR').format(_selectedPersonne!.moisPaye ?? DateTime.now())}',
                 ),
                 const SizedBox(height: 20),
                 ElevatedButton(
@@ -271,4 +267,3 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 }
-
