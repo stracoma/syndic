@@ -1,53 +1,125 @@
+import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'personne.dart';
 
-final List<Personne> lespersonnes = [
-  Personne(nom: "Slaoui1", prenom: "Kamal", numero: 1, moisPaye: DateTime(2024, 1)),
-  Personne(nom: "Malki1", prenom: "Brahim", numero: 2, moisPaye: DateTime(2024, 2)),
-  Personne(nom: "Slaoui2", prenom: "Kamal", numero: 3, moisPaye: DateTime(2024, 3)),
-  Personne(nom: "Malki2", prenom: "Brahim", numero: 4, moisPaye: DateTime(2024, 4)),
-  Personne(nom: "Slaoui3", prenom: "Kamal", numero: 5, moisPaye: DateTime(2024, 5)),
-  Personne(nom: "Malki3", prenom: "Brahim", numero: 6, moisPaye: DateTime(2024, 6)),
-  Personne(nom: "Slaoui4", prenom: "Kamal", numero: 7, moisPaye: DateTime(2024, 7)),
-  Personne(nom: "Malki4", prenom: "Brahim", numero: 8, moisPaye: DateTime(2024, 8)),
-  Personne(nom: "Slaoui5", prenom: "Kamal", numero: 9, moisPaye: DateTime(2024, 9)),
-  Personne(nom: "Malki5", prenom: "Brahim", numero: 10, moisPaye: DateTime(2024, 10)),
-  Personne(nom: "Slaoui6", prenom: "Kamal", numero: 11, moisPaye: DateTime(2024, 11)),
-  Personne(nom: "Malki7", prenom: "Brahim", numero: 12, moisPaye: DateTime(2024, 12)),
-  Personne(nom: "Slaoui7", prenom: "Kamal", numero: 13, moisPaye: DateTime(2025, 1)),
-  Personne(nom: "Malki8", prenom: "Brahim", numero: 14, moisPaye: DateTime(2025, 2)),
-  Personne(nom: "Slaoui8", prenom: "Kamal", numero: 15, moisPaye: DateTime(2025, 3)),
-  Personne(nom: "Malki9", prenom: "Brahim", numero: 16, moisPaye: DateTime(2025, 4)),
-  Personne(nom: "Slaoui10", prenom: "Kamal", numero: 17, moisPaye: DateTime(2025, 5)),
-  Personne(nom: "Malki10", prenom: "Brahim", numero: 18, moisPaye: DateTime(2025, 6)),
-  Personne(nom: "Slaoui", prenom: "Kamal", numero: 19, moisPaye: DateTime(2025, 7)),
-  Personne(nom: "Malki", prenom: "Brahim", numero: 20, moisPaye: DateTime(2025, 8)),
-  Personne(nom: "Slaoui", prenom: "Kamal", numero: 21, moisPaye: DateTime(2025, 9)),
-  Personne(nom: "Malki", prenom: "Brahim", numero: 22, moisPaye: DateTime(2025, 10)),
-  Personne(nom: "Slaoui", prenom: "Kamal", numero: 23, moisPaye: DateTime(2025, 11)),
-  Personne(nom: "Malki", prenom: "Brahim", numero: 24, moisPaye: DateTime(2025, 12)),
-  Personne(nom: "Slaoui", prenom: "Kamal", numero: 25, moisPaye: DateTime(2026, 1)),
-  Personne(nom: "Malki", prenom: "Brahim", numero: 26, moisPaye: DateTime(2026, 2)),
-  Personne(nom: "Slaoui", prenom: "Kamal", numero: 27, moisPaye: DateTime(2026, 3)),
-  Personne(nom: "Malki", prenom: "Brahim", numero: 28, moisPaye: DateTime(2026, 4)),
-  Personne(nom: "Slaoui", prenom: "Kamal", numero: 29, moisPaye: DateTime(2026, 5)),
-  Personne(nom: "Malki", prenom: "Brahim", numero: 30, moisPaye: DateTime(2026, 6)),
-  Personne(nom: "Slaoui", prenom: "Kamal", numero: 31, moisPaye: DateTime(2026, 7)),
-  Personne(nom: "Malki", prenom: "Brahim", numero: 32, moisPaye: DateTime(2026, 8)),
-  Personne(nom: "Slaoui", prenom: "Kamal", numero: 33, moisPaye: DateTime(2026, 9)),
-  Personne(nom: "Malki", prenom: "Brahim", numero: 34, moisPaye: DateTime(2026, 10)),
-  Personne(nom: "Slaoui", prenom: "Kamal", numero: 35, moisPaye: DateTime(2026, 11)),
-  Personne(nom: "Malki", prenom: "Brahim", numero: 36, moisPaye: DateTime(2026, 12)),
-  Personne(nom: "Slaoui", prenom: "Kamal", numero: 37, moisPaye: DateTime(2027, 1)),
-  Personne(nom: "Malki", prenom: "Brahim", numero: 38, moisPaye: DateTime(2027, 2)),
-  Personne(nom: "Slaoui", prenom: "Kamal", numero: 39, moisPaye: DateTime(2027, 3)),
-  Personne(nom: "Malki", prenom: "Brahim", numero: 40, moisPaye: DateTime(2027, 4)),
-  Personne(nom: "Slaoui", prenom: "Kamal", numero: 41, moisPaye: DateTime(2027, 5)),
-  Personne(nom: "Malki", prenom: "Brahim", numero: 42, moisPaye: DateTime(2027, 6)),
-  Personne(nom: "Slaoui", prenom: "Kamal", numero: 43, moisPaye: DateTime(2027, 7)),
-  Personne(nom: "Malki", prenom: "Brahim", numero: 44, moisPaye: DateTime(2027, 8)),
-  Personne(nom: "Slaoui", prenom: "Kamal", numero: 45, moisPaye: DateTime(2027, 9)),
-  Personne(nom: "Malki", prenom: "Brahim", numero: 46, moisPaye: DateTime(2027, 10)),
-  Personne(nom: "Slaoui", prenom: "Kamal", numero: 47, moisPaye: DateTime(2027, 11)),
-  Personne(nom: "Malki", prenom: "Brahim", numero: 48, moisPaye: DateTime(2027, 12)),
-  Personne(nom: "Slaoui", prenom: "Kamal", numero: 49, moisPaye: DateTime(2028, 1)),
-];
+class CreerPersonne extends StatelessWidget {
+  final Personne? personne;
+
+  const CreerPersonne({super.key, this.personne});
+
+  @override
+  Widget build(BuildContext context) {
+    final TextEditingController nomController =
+    TextEditingController(text: personne?.nom ?? '');
+    final TextEditingController prenomController =
+    TextEditingController(text: personne?.prenom ?? '');
+    final TextEditingController numeroController = TextEditingController(
+        text: personne?.numero != null ? personne!.numero.toString() : '');
+
+    // Contrôleur pour le mois payé
+    DateTime moisPaye = personne?.moisPaye ?? DateTime.now();
+    final TextEditingController moisPayeController = TextEditingController(
+        text: "${moisPaye.day}/${moisPaye.month}/${moisPaye.year}");
+
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(personne == null ? 'Créer une personne' : 'Modifier ${personne!.nom}'),
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          children: [
+            TextField(
+              controller: nomController,
+              decoration: InputDecoration(labelText: 'Nom'),
+            ),
+            TextField(
+              controller: prenomController,
+              decoration: InputDecoration(labelText: 'Prénom'),
+            ),
+            TextField(
+              controller: numeroController,
+              decoration: InputDecoration(labelText: 'Numéro'),
+              keyboardType: TextInputType.number,
+            ),
+            const SizedBox(height: 20),
+
+            // Mois payé avec un bouton pour sélectionner la date
+            TextField(
+              controller: moisPayeController,
+              decoration: InputDecoration(labelText: 'Mois payé'),
+              readOnly: true, // Rendre le champ non éditable directement
+              onTap: () async {
+                final selectedDate = await showDatePicker(
+                  context: context,
+                  initialDate: moisPaye,
+                  firstDate: DateTime(2020),
+                  lastDate: DateTime(2101),
+                );
+                if (selectedDate != null) {
+                  moisPaye = selectedDate;
+                  moisPayeController.text = "${moisPaye.day}/${moisPaye.month}/${moisPaye.year}";
+                }
+              },
+            ),
+
+            const SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: () async {
+                final String nom = nomController.text.trim();
+                final String prenom = prenomController.text.trim();
+                final int? numero = int.tryParse(numeroController.text.trim());
+
+                if (nom.isEmpty || prenom.isEmpty || numero == null) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Veuillez remplir tous les champs correctement.')),
+                  );
+                  return;
+                }
+
+                final data = {
+                  'nom': nom,
+                  'prenom': prenom,
+                  'numero': numero,
+                  'moisPaye': moisPaye,
+                };
+
+                final collection = FirebaseFirestore.instance.collection('personnes');
+                String message;
+
+                if (personne == null) {
+                  await collection.add(data);
+                  message = 'Personne créée avec succès.';
+
+                  // Effacer les champs
+                  nomController.clear();
+                  prenomController.clear();
+                  numeroController.clear();
+                  moisPayeController.clear();
+                } else {
+                  final snapshot = await collection
+                      .where('numero', isEqualTo: personne!.numero)
+                      .limit(1)
+                      .get();
+
+                  if (snapshot.docs.isNotEmpty) {
+                    await snapshot.docs.first.reference.update(data);
+                    message = 'Modifications enregistrées.';
+                  } else {
+                    message = 'Aucune personne trouvée à modifier.';
+                  }
+                }
+
+                ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+
+                await Future.delayed(Duration(seconds: 1));
+                Navigator.pop(context);
+              },
+              child: Text(personne == null ? 'Créer' : 'Enregistrer'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
