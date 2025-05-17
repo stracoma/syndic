@@ -5,9 +5,9 @@ import 'lesFonctions.dart';
 
 class MyHomePage extends StatelessWidget {
   final bool isAdmin;
-  final String _adminPassword = "admin";
+  final String _adminPassword = "taiba25";
 
-  MyHomePage({required this.isAdmin});
+  MyHomePage({super.key, required this.isAdmin});
 
   final CollectionReference _personnesCollection =
   FirebaseFirestore.instance.collection('personnes');

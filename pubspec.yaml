@@ -12,13 +12,15 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  firebase_core: ^3.13.0
-  cloud_firestore: ^5.6.7
-  firebase_auth: ^5.5.3
-  intl: ^0.19.0
-  flutter_localizations: # Supprimez 'sdk: flutter' ici. Vous l'incluez avec le package Flutter principal.
+  firebase_core: ^2.27.0
+  firebase_auth: ^4.19.1
+  cloud_firestore: ^4.15.4
+  firebase_storage: ^11.7.0
+  intl: 0.19.0
+  flutter_localizations:
     sdk: flutter
   cupertino_icons: ^1.0.8
+  flutterfire_cli: ^1.0.0
 
 dev_dependencies:
   flutter_test:

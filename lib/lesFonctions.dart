@@ -66,14 +66,14 @@ void afficherDialoguePourEdition({
   required String motDePasseAdmin,
   required Personne personne,
 }) {
-  final TextEditingController _controller = TextEditingController();
+  final TextEditingController controller = TextEditingController();
 
   showDialog(
     context: context,
     builder: (_) => AlertDialog(
       title: Text('Mot de passe requis'),
       content: TextField(
-        controller: _controller,
+        controller: controller,
         obscureText: true,
         decoration: InputDecoration(hintText: 'Mot de passe'),
       ),
@@ -84,7 +84,7 @@ void afficherDialoguePourEdition({
         ),
         TextButton(
           onPressed: () {
-            if (_controller.text == motDePasseAdmin) {
+            if (controller.text == motDePasseAdmin) {
               Navigator.pop(context);
               Navigator.push(
                 context,
@@ -109,14 +109,14 @@ void afficherDialoguePourCreation({
   required BuildContext context,
   required String motDePasseAdmin,
 }) {
-  final TextEditingController _controller = TextEditingController();
+  final TextEditingController controller = TextEditingController();
 
   showDialog(
     context: context,
     builder: (_) => AlertDialog(
       title: Text('Mot de passe requis'),
       content: TextField(
-        controller: _controller,
+        controller: controller,
         obscureText: true,
         decoration: InputDecoration(hintText: 'Mot de passe'),
       ),
@@ -127,7 +127,7 @@ void afficherDialoguePourCreation({
         ),
         TextButton(
           onPressed: () {
-            if (_controller.text == motDePasseAdmin) {
+            if (controller.text == motDePasseAdmin) {
               Navigator.pop(context);
               Navigator.push(
                 context,

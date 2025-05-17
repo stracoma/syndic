@@ -1,22 +1,24 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'home_page.dart';
 import 'lesFonctions.dart';
 
 class AccueilPage extends StatelessWidget {
-  final String adminPassword = "admin";
+  final String adminPassword = "taiba25";
+  final String guestPassword = "techno25";
 
-  void _adminLogin(BuildContext context) {
+  const AccueilPage({super.key});
+
+  void _login(BuildContext context) {
     final TextEditingController passwordController = TextEditingController();
 
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
-        title: Text('Mot de passe administrateur'),
+        title: Text('Mot de passe'),
         content: TextField(
           controller: passwordController,
           obscureText: true,
-          decoration: InputDecoration(hintText: 'Mot de passe'),
+          decoration: InputDecoration(hintText: 'Entrez le mot de passe'),
         ),
         actions: [
           TextButton(
@@ -25,11 +27,14 @@ class AccueilPage extends StatelessWidget {
           ),
           TextButton(
             onPressed: () {
-              if (passwordController.text == adminPassword) {
+              final entered = passwordController.text.trim();
+
+              if (entered == adminPassword) {
+                // Connexion admin Firebase
                 connexionAdminFirebase(
                   context: context,
-                  email: "mohamed@gmail.com",
-                  motDePasse: "Taiba2025",
+                  email: "admin@gmail.com",
+                  motDePasse: adminPassword,
                   onSuccess: () {
                     Navigator.pop(context);
                     Navigator.push(
@@ -37,6 +42,12 @@ class AccueilPage extends StatelessWidget {
                       MaterialPageRoute(builder: (_) => MyHomePage(isAdmin: true)),
                     );
                   },
+                );
+              } else if (entered == guestPassword) {
+                Navigator.pop(context);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => MyHomePage(isAdmin: false)),
                 );
               } else {
                 ScaffoldMessenger.of(context).showSnackBar(
@@ -51,33 +62,35 @@ class AccueilPage extends StatelessWidget {
     );
   }
 
-  void _invitedAccess(BuildContext context) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (_) => MyHomePage(isAdmin: false)),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Page d\'accueil')),
+      backgroundColor: Colors.amber[500],
+      appBar: AppBar(
+          backgroundColor: Colors.amber[800],
+          title: Text('Jnane technopolis',
+        style: TextStyle(
+          color: Colors.white,
+          fontSize: 25,
+          fontWeight: FontWeight.bold,
+        ),
+    )),
       body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            ElevatedButton.icon(
-              icon: Icon(Icons.lock),
-              label: Text('Administrateur'),
-              onPressed: () => _adminLogin(context),
+
+        child: ElevatedButton.icon(
+          icon: Icon(Icons.lock),
+          label: Text('Se connecter',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
             ),
-            SizedBox(height: 20),
-            ElevatedButton.icon(
-              icon: Icon(Icons.visibility),
-              label: Text('Invité'),
-              onPressed: () => _invitedAccess(context),
-            ),
-          ],
+          ),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.amber[800], // Couleur de fond
+          ),
+
+          onPressed: () => _login(context),
         ),
       ),
     );
