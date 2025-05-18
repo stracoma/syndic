@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:intl/intl.dart';
 import 'personne.dart';
 import 'lesFonctions.dart';
 
@@ -37,24 +38,31 @@ class MyHomePage extends StatelessWidget {
             final docs = snapshot.data!.docs;
             final personnes = docs.map((doc) {
               final data = doc.data() as Map<String, dynamic>;
-              return Personne.fromMap(data);
-            }).toList()
+              try {
+                return Personne.fromMap(data, doc.id);
+              } catch (e) {
+                print('Erreur de parsing pour le document ${doc.id} : $e');
+                return null;
+              }
+            }).whereType<Personne>().toList()
               ..sort((a, b) => a.numero.compareTo(b.numero));
 
             return Column(
               children: [
                 ...personnes.map((personne) => Card(
-                  margin: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  margin:
+                  EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8)),
                   elevation: 2,
                   child: ListTile(
-                    title: Text('${personne.nom ?? ''} ${personne.prenom ?? ''}'),
+                    title: Text('${personne.nom} ${personne.prenom}'),
                     subtitle: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text('Numéro: ${personne.numero}'),
                         Text(
-                          'Dernier mois payé: ${personne.moisPaye != null ? "${personne.moisPaye!.month.toString().padLeft(2, '0')}/${personne.moisPaye!.year}" : "Non spécifié"}',
+                          'Dernier mois payé: ${personne.moisPaye != null ? DateFormat.yMMMM('fr_FR').format(personne.moisPaye!) : "Non spécifié"}',
                         ),
                       ],
                     ),
