@@ -2,11 +2,19 @@ import 'package:flutter/material.dart';
 import 'home_page.dart';
 import 'lesFonctions.dart';
 
-class AccueilPage extends StatelessWidget {
+class AccueilPage extends StatefulWidget {
+  const AccueilPage({super.key});
+
+  @override
+  State<AccueilPage> createState() => _AccueilPageState();
+}
+
+class _AccueilPageState extends State<AccueilPage> {
   final String adminPassword = "taiba25";
   final String guestPassword = "techno25";
 
-  const AccueilPage({super.key});
+  bool _buttonsEnabled = false;
+  bool _isAdmin = false;
 
   void _login(BuildContext context) {
     final TextEditingController passwordController = TextEditingController();
@@ -30,25 +38,24 @@ class AccueilPage extends StatelessWidget {
               final entered = passwordController.text.trim();
 
               if (entered == adminPassword) {
-                // Connexion admin Firebase
                 connexionAdminFirebase(
                   context: context,
                   email: "admin@gmail.com",
                   motDePasse: adminPassword,
                   onSuccess: () {
+                    setState(() {
+                      _buttonsEnabled = true;
+                      _isAdmin = true;
+                    });
                     Navigator.pop(context);
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (_) => MyHomePage(isAdmin: true)),
-                    );
                   },
                 );
               } else if (entered == guestPassword) {
+                setState(() {
+                  _buttonsEnabled = true;
+                  _isAdmin = false;
+                });
                 Navigator.pop(context);
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => MyHomePage(isAdmin: false)),
-                );
               } else {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(content: Text('Mot de passe incorrect')),
@@ -62,35 +69,66 @@ class AccueilPage extends StatelessWidget {
     );
   }
 
+  Widget _buildButton(String label, VoidCallback? onPressed) {
+    return SizedBox(
+      width: 220,
+      child: ElevatedButton(
+        onPressed: onPressed,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Colors.amber[800],
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 20,
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.amber[500],
       appBar: AppBar(
-          backgroundColor: Colors.amber[800],
-          title: Text('Jnane technopolis',
-        style: TextStyle(
-          color: Colors.white,
-          fontSize: 25,
-          fontWeight: FontWeight.bold,
+        backgroundColor: Colors.amber[800],
+        title: Text(
+          'Jnane technopolis',
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 25,
+            fontWeight: FontWeight.bold,
+          ),
         ),
-    )),
+      ),
       body: Center(
-
-        child: ElevatedButton.icon(
-          icon: Icon(Icons.lock),
-          label: Text('Se connecter',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _buildButton('Se connecter', () => _login(context)),
+            SizedBox(height: 30),
+            _buildButton(
+              'Cotisations',
+              _buttonsEnabled
+                  ? () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => MyHomePage(isAdmin: _isAdmin),
+                  ),
+                );
+              }
+                  : null,
             ),
-          ),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.amber[800], // Couleur de fond
-          ),
-
-          onPressed: () => _login(context),
+            SizedBox(height: 20),
+            _buildButton(
+              'Comptabilité',
+              _buttonsEnabled ? () {} : null,
+            ),
+          ],
         ),
       ),
     );
