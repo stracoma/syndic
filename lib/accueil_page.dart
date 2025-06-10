@@ -1,6 +1,11 @@
+// accueil_page.dart
+// (Le reste de vos imports et la classe AccueilPage restent inchangés)
+
 import 'package:flutter/material.dart';
 import 'home_page.dart';
 import 'lesFonctions.dart';
+import 'comptabilite_page.dart';
+import 'gardiens_page.dart'; // NOUVEAU: Importez la nouvelle page des gardiens
 
 class AccueilPage extends StatefulWidget {
   const AccueilPage({super.key});
@@ -22,16 +27,16 @@ class _AccueilPageState extends State<AccueilPage> {
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
-        title: Text('Mot de passe'),
+        title: const Text('Mot de passe'),
         content: TextField(
           controller: passwordController,
           obscureText: true,
-          decoration: InputDecoration(hintText: 'Entrez le mot de passe'),
+          decoration: const InputDecoration(hintText: 'Entrez le mot de passe'),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text('Annuler'),
+            child: const Text('Annuler'),
           ),
           TextButton(
             onPressed: () {
@@ -51,51 +56,49 @@ class _AccueilPageState extends State<AccueilPage> {
                   },
                 );
               } else if (entered == guestPassword) {
-                setState(() {
-                  _buttonsEnabled = true;
-                  _isAdmin = false;
-                });
-                Navigator.pop(context);
+                connexionAdminFirebase(
+                  context: context,
+                  email: "invite@gmail.com",
+                  motDePasse: guestPassword,
+                  onSuccess: () {
+                    setState(() {
+                      _buttonsEnabled = true;
+                      _isAdmin = false;
+                    });
+                    Navigator.pop(context);
+                  },
+                );
               } else {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Mot de passe incorrect')),
+                  const SnackBar(content: Text('Mot de passe incorrect')),
                 );
               }
             },
-            child: Text('Valider'),
+            child: const Text('Valider'),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildButton(String label, VoidCallback? onPressed) {
-    return SizedBox(
-      width: 220,
-      child: ElevatedButton(
-        onPressed: onPressed,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.amber[800],
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            fontSize: 20,
-            color: Colors.white,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
+  // NOTE : La fonction _buildButton() doit être définie ici dans la classe _AccueilPageState
+  Widget _buildButton(String text, VoidCallback? onPressed) {
+    return ElevatedButton(
+      onPressed: onPressed,
+      style: ElevatedButton.styleFrom(
+        minimumSize: const Size(200, 50), // Largeur et hauteur minimales
       ),
+      child: Text(text),
     );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.amber[500],
+      backgroundColor: Colors.blue[50],
       appBar: AppBar(
-        backgroundColor: Colors.amber[800],
-        title: Text(
+        backgroundColor: Colors.blue[800],
+        title: const Text(
           'Jnane technopolis',
           style: TextStyle(
             color: Colors.white,
@@ -108,8 +111,9 @@ class _AccueilPageState extends State<AccueilPage> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
+            const SizedBox(height: 50),
             _buildButton('Se connecter', () => _login(context)),
-            SizedBox(height: 30),
+            const SizedBox(height: 30),
             _buildButton(
               'Cotisations',
               _buttonsEnabled
@@ -123,10 +127,29 @@ class _AccueilPageState extends State<AccueilPage> {
               }
                   : null,
             ),
-            SizedBox(height: 20),
+            const SizedBox(height: 30),
             _buildButton(
               'Comptabilité',
-              _buttonsEnabled ? () {} : null,
+              _buttonsEnabled
+                  ? () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const ComptabilitePage()),
+                );
+              }
+                  : null,
+            ),
+            const SizedBox(height: 30), // AJOUT NOUVEAU ESPACEMENT
+            _buildButton( // NOUVEAU BOUTON "Gardiens"
+              'Gardiens',
+              _buttonsEnabled // Assurez-vous que les boutons sont activés
+                  ? () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const GardiensPage()), // Navigue vers la nouvelle page
+                );
+              }
+                  : null,
             ),
           ],
         ),

@@ -1,3 +1,5 @@
+// personne.dart
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class Personne {
@@ -6,6 +8,7 @@ class Personne {
   final String prenom;
   final int numero;
   final DateTime? moisPaye;
+  final DateTime? dateSuscription; // ✅ Ajout de la date d'inscription
 
   Personne({
     this.id,
@@ -13,6 +16,7 @@ class Personne {
     required this.prenom,
     required this.numero,
     this.moisPaye,
+    this.dateSuscription, // ✅ Ajout au constructeur
   });
 
   Map<String, dynamic> toMap() {
@@ -20,7 +24,8 @@ class Personne {
       'nom': nom,
       'prenom': prenom,
       'numero': numero,
-      'moisPaye': moisPaye, // Envoi direct du DateTime (pas de toIso8601String)
+      'moisPaye': moisPaye,
+      'dateSuscription': dateSuscription, // ✅ Enregistrement dans Firebase
     };
   }
 
@@ -33,6 +38,9 @@ class Personne {
       moisPaye: map['moisPaye'] is Timestamp
           ? (map['moisPaye'] as Timestamp).toDate()
           : null,
+      dateSuscription: map['dateSuscription'] is Timestamp
+          ? (map['dateSuscription'] as Timestamp).toDate()
+          : null, // ✅ Gestion de la récupération
     );
   }
 }
