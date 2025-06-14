@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 import 'comptabilite_service.dart';
-import 'gardiens_page.dart';
 
 class ComptabilitePage extends StatefulWidget {
   const ComptabilitePage({super.key});
@@ -13,6 +12,7 @@ class ComptabilitePage extends StatefulWidget {
 }
 
 class _ComptabilitePageState extends State<ComptabilitePage> {
+
   @override
   void initState() {
     super.initState();
@@ -20,55 +20,190 @@ class _ComptabilitePageState extends State<ComptabilitePage> {
   }
 
   Future<void> _initializeComptabiliteData() async {
-    // S'assurer que les documents initiaux existent dans Firebase, sinon les créer avec 0.0
     await FirebaseFirestore.instance.collection('comptes').doc('cotisations').set({'montant': 0.0}, SetOptions(merge: true));
+    // S'assurer que le document 'depenses' existe avec 'montant' pour les "autres dépenses"
+    await FirebaseFirestore.instance.collection('comptes').doc('depenses').set({'montant': 0.0}, SetOptions(merge: true));
+    // S'assurer que le document 'depensesGardiens' existe avec 'montant' pour le total des gardiens
+    await FirebaseFirestore.instance.collection('comptes').doc('depensesGardiens').set({'montant': 0.0}, SetOptions(merge: true));
     await FirebaseFirestore.instance.collection('comptes').doc('solde').set({'montant': 0.0}, SetOptions(merge: true));
 
-    final fraisGenerauxDocRef = FirebaseFirestore.instance.collection('comptes').doc('frais_generaux');
-    final fraisGenerauxDocSnapshot = await fraisGenerauxDocRef.get();
-
-    if (!fraisGenerauxDocSnapshot.exists) {
-      await fraisGenerauxDocRef.set({'frais_autre_gardiens': 0.0});
-    }
-
-    // Recalculer les cotisations et le solde quand la page se charge
     await ComptabiliteService.updateCotisations();
+    // Nous appelons updateSolde() pour mettre à jour le solde global
+    // La mise à jour des montants individuels de dépenses sera gérée par les pages d'écriture
     await ComptabiliteService.updateSolde();
   }
 
-  // Fonction pour construire une carte d'affichage des comptes
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Comptabilité'),
+        backgroundColor: Colors.blue[800],
+        foregroundColor: Colors.white,
+      ),
+      backgroundColor: Colors.blue[50],
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // Carte Solde Actuel
+            StreamBuilder<DocumentSnapshot>(
+              stream: FirebaseFirestore.instance.collection('comptes').doc('solde').snapshots(),
+              builder: (context, snapshot) {
+                if (!snapshot.hasData) return const CircularProgressIndicator();
+                final solde = snapshot.data!['montant'] ?? 0.0;
+                return _buildCompteCard(
+                  'Solde Actuel',
+                  solde,
+                  Colors.green[800]!,
+                  Icons.account_balance_wallet,
+                );
+              },
+            ),
+            const SizedBox(height: 16),
+
+            // Total Cotisations sur sa propre ligne
+            StreamBuilder<DocumentSnapshot>(
+              stream: FirebaseFirestore.instance.collection('comptes').doc('cotisations').snapshots(),
+              builder: (context, snapshot) {
+                if (!snapshot.hasData) return const CircularProgressIndicator();
+                final cotisations = snapshot.data!['montant'] ?? 0.0;
+                return _buildCompteCard(
+                  'Total Cotisations',
+                  cotisations,
+                  Colors.blue[700]!,
+                  Icons.payments,
+                );
+              },
+            ),
+            const SizedBox(height: 16),
+
+            // Autres Dépenses sur sa propre ligne - CORRIGÉ pour lire 'depenses'
+            StreamBuilder<DocumentSnapshot>(
+              stream: FirebaseFirestore.instance.collection('comptes').doc('depenses').snapshots(),
+              builder: (context, snapshot) {
+                if (!snapshot.hasData) return const CircularProgressIndicator();
+                // Assurez-vous de lire le champ 'montant' du document 'depenses'
+                final depenses = snapshot.data!['montant'] ?? 0.0;
+                return _buildCompteCard(
+                  'Autres Dépenses',
+                  depenses,
+                  Colors.orange[700]!,
+                  Icons.shopping_cart,
+                );
+              },
+            ),
+            const SizedBox(height: 16),
+
+            // Dépenses Gardiens sur sa propre ligne - CORRIGÉ pour lire 'depensesGardiens'
+            StreamBuilder<DocumentSnapshot>(
+              stream: FirebaseFirestore.instance.collection('comptes').doc('depensesGardiens').snapshots(),
+              builder: (context, snapshot) {
+                if (!snapshot.hasData) return const CircularProgressIndicator();
+                // Assurez-vous de lire le champ 'montant' du document 'depensesGardiens'
+                final depensesGardiens = snapshot.data!['montant'] ?? 0.0;
+                return _buildCompteCard(
+                  'Dépenses Gardiens',
+                  depensesGardiens,
+                  Colors.red[700]!,
+                  Icons.security,
+                );
+              },
+            ),
+            const SizedBox(height: 16),
+
+            // Liste des transactions
+            Expanded( // La ListView a besoin d'un Expanded ou d'une hauteur contrainte quand elle est dans une Column et qu'elle n'est pas le seul enfant.
+              // Cependant, si le parent est SingleChildScrollView, Expanded ne fonctionne pas comme on veut.
+              // On utilise shrinkWrap et NeverScrollableScrollPhysics pour laisser le SingleChildScrollView gérer le scroll.
+              child: StreamBuilder<QuerySnapshot>(
+                stream: ComptabiliteService.getTransactions(),
+                builder: (context, snapshot) {
+                  if (!snapshot.hasData) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+                  final transactions = snapshot.data!.docs;
+                  if (transactions.isEmpty) {
+                    return const Center(child: Text('Aucune transaction enregistrée.'));
+                  }
+                  return ListView.builder(
+                    shrinkWrap: true, // Très important pour que ListView fonctionne dans un SingleChildScrollView
+                    physics: const NeverScrollableScrollPhysics(), // Empêche ListView d'avoir son propre scroll
+                    itemCount: transactions.length,
+                    itemBuilder: (context, index) {
+                      final transaction = transactions[index].data() as Map<String, dynamic>;
+                      final type = transaction['type'] ?? 'N/A';
+                      final description = transaction['description'] ?? 'N/A';
+                      final montant = transaction['montant'] ?? 0.0;
+                      final date = (transaction['date'] as Timestamp?)?.toDate();
+
+                      return Card(
+                        margin: const EdgeInsets.symmetric(vertical: 8),
+                        child: ListTile(
+                          leading: Icon(
+                            type == 'depense' ? Icons.remove_circle : Icons.add_circle,
+                            color: type == 'depense' ? Colors.red : Colors.green,
+                          ),
+                          title: Text(description),
+                          subtitle: Text(date != null ? DateFormat('dd/MM/yyyy HH:mm').format(date) : 'Date inconnue'),
+                          trailing: Text(
+                            '${type == 'depense' ? '-' : '+'}${montant.toStringAsFixed(2)} DH',
+                            style: TextStyle(
+                              color: type == 'depense' ? Colors.red : Colors.green,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      );
+                    },
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () => _showAddDepenseDialog(context),
+        backgroundColor: Colors.amber[600],
+        foregroundColor: Colors.white,
+        child: const Icon(Icons.add),
+      ),
+    );
+  }
+
   Widget _buildCompteCard(String title, double amount, Color color, IconData icon) {
     return Card(
       elevation: 4,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      margin: const EdgeInsets.symmetric(vertical: 8.0), // Ajustement de la marge verticale
+      color: Colors.white,
       child: Padding(
         padding: const EdgeInsets.all(16.0),
-        child: Row(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Icon(icon, size: 36, color: color), // Taille d'icône légèrement réduite mais toujours visible
-            const SizedBox(width: 12), // Espacement réduit
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: TextStyle(
-                      fontSize: 16, // Taille de police légèrement réduite
-                      fontWeight: FontWeight.bold,
-                      color: color,
-                    ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: color,
                   ),
-                  const SizedBox(height: 4),
-                  Text(
-                    '${NumberFormat.currency(locale: 'fr_FR', symbol: 'DH').format(amount)}',
-                    style: const TextStyle(
-                      fontSize: 22, // Taille de police principale ajustée
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ],
+                ),
+                Icon(icon, color: color, size: 28),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text(
+              '${amount.toStringAsFixed(2)} DH',
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                color: color,
               ),
             ),
           ],
@@ -77,7 +212,7 @@ class _ComptabilitePageState extends State<ComptabilitePage> {
     );
   }
 
-  void _addNouvelleDepense(BuildContext context) {
+  void _showAddDepenseDialog(BuildContext context) {
     final TextEditingController descriptionController = TextEditingController();
     final TextEditingController montantController = TextEditingController();
     final formKey = GlobalKey<FormState>();
@@ -85,34 +220,32 @@ class _ComptabilitePageState extends State<ComptabilitePage> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Nouvelle Dépense Générale'),
+        title: const Text('Nouvelle Dépense'),
         content: Form(
           key: formKey,
-          child: SingleChildScrollView( // Ajout d'un scroll pour le contenu du dialogue si le clavier est présent
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextFormField(
-                  controller: descriptionController,
-                  decoration: const InputDecoration(labelText: 'Description'),
-                  validator: (value) => value!.isEmpty ? 'Requis' : null,
-                ),
-                TextFormField(
-                  controller: montantController,
-                  keyboardType: TextInputType.number,
-                  decoration: const InputDecoration(labelText: 'Montant (DH)'),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Requis';
-                    }
-                    if (double.tryParse(value) == null) {
-                      return 'Veuillez entrer un nombre valide';
-                    }
-                    return null;
-                  },
-                ),
-              ],
-            ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextFormField(
+                controller: descriptionController,
+                decoration: const InputDecoration(labelText: 'Description'),
+                validator: (value) => value!.isEmpty ? 'Requis' : null,
+              ),
+              TextFormField(
+                controller: montantController,
+                keyboardType: TextInputType.number,
+                decoration: const InputDecoration(labelText: 'Montant (DH)'),
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Requis';
+                  }
+                  if (double.tryParse(value) == null) {
+                    return 'Veuillez entrer un nombre valide';
+                  }
+                  return null;
+                },
+              ),
+            ],
           ),
         ),
         actions: [
@@ -134,229 +267,6 @@ class _ComptabilitePageState extends State<ComptabilitePage> {
             child: const Text('Enregistrer'),
           ),
         ],
-      ),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Comptabilité'),
-        backgroundColor: Colors.blue[800],
-        foregroundColor: Colors.white,
-      ),
-      backgroundColor: Colors.blue[50],
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            StreamBuilder<DocumentSnapshot>(
-              stream: FirebaseFirestore.instance.collection('comptes').doc('solde').snapshots(),
-              builder: (context, snapshot) {
-                if (!snapshot.hasData || !snapshot.data!.exists) {
-                  return _buildCompteCard('Solde Actuel', 0.0, Colors.green[800]!, Icons.account_balance_wallet);
-                }
-                final solde = (snapshot.data!['montant'] as num?)?.toDouble() ?? 0.0;
-                return _buildCompteCard(
-                  'Solde Actuel',
-                  solde,
-                  Colors.green[800]!,
-                  Icons.account_balance_wallet,
-                );
-              },
-            ),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                Expanded(
-                  child: StreamBuilder<DocumentSnapshot>(
-                    stream: FirebaseFirestore.instance.collection('comptes').doc('cotisations').snapshots(),
-                    builder: (context, snapshot) {
-                      if (!snapshot.hasData || !snapshot.data!.exists) {
-                        return _buildCompteCard('Total Cotisations', 0.0, Colors.blue[800]!, Icons.money);
-                      }
-                      final cotisations = (snapshot.data!['montant'] as num?)?.toDouble() ?? 0.0;
-                      return _buildCompteCard(
-                        'Total Cotisations',
-                        cotisations,
-                        Colors.blue[800]!,
-                        Icons.money,
-                      );
-                    },
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: StreamBuilder<DocumentSnapshot>(
-                    stream: FirebaseFirestore.instance.collection('comptes').doc('frais_generaux').snapshots(),
-                    builder: (context, snapshot) {
-                      if (!snapshot.hasData || !snapshot.data!.exists) {
-                        return _buildCompteCard('Autres Dépenses', 0.0, Colors.red[800]!, Icons.money_off);
-                      }
-                      final autresDepenses = (snapshot.data!['frais_autre_gardiens'] as num?)?.toDouble() ?? 0.0;
-                      return _buildCompteCard(
-                        'Autres Dépenses',
-                        autresDepenses,
-                        Colors.red[800]!,
-                        Icons.money_off,
-                      );
-                    },
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            StreamBuilder<DocumentSnapshot>(
-              stream: FirebaseFirestore.instance.collection('comptes').doc('depenses').snapshots(),
-              builder: (context, snapshot) {
-                if (!snapshot.hasData || !snapshot.data!.exists) {
-                  return _buildCompteCard('Salaires Gardiens', 0.0, Colors.orange[800]!, Icons.person_pin);
-                }
-                final data = snapshot.data!.data() as Map<String, dynamic>?;
-                double totalSalairesGardiens = 0.0;
-
-                if (data != null) {
-                  for (int i = 1; i <= 3; i++) {
-                    final gardienSommeRecueKey = 'gardien${i}_somme_recue';
-                    totalSalairesGardiens += (data[gardienSommeRecueKey] as num?)?.toDouble() ?? 0.0;
-                  }
-                }
-
-                return _buildCompteCard(
-                  'Salaires Gardiens',
-                  totalSalairesGardiens,
-                  Colors.orange[800]!,
-                  Icons.person_pin,
-                );
-              },
-            ),
-
-            const SizedBox(height: 16),
-            Column(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                ElevatedButton.icon(
-                  onPressed: () {
-                    _addNouvelleDepense(context);
-                  },
-                  icon: const Icon(Icons.add),
-                  label: const Text('Ajouter une Dépense Générale'),
-                  style: ElevatedButton.styleFrom(
-                    minimumSize: const Size(double.infinity, 50),
-                    backgroundColor: Colors.red[600],
-                    foregroundColor: Colors.white,
-                    textStyle: const TextStyle(fontSize: 16), // Taille de texte du bouton
-                  ),
-                ),
-                const SizedBox(height: 10),
-                ElevatedButton.icon(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => const GardiensPage()),
-                    );
-                  },
-                  icon: const Icon(Icons.group),
-                  label: const Text('Gérer les Dépenses des Gardiens'),
-                  style: ElevatedButton.styleFrom(
-                    minimumSize: const Size(double.infinity, 50),
-                    backgroundColor: Colors.purple[600],
-                    foregroundColor: Colors.white,
-                    textStyle: const TextStyle(fontSize: 16), // Taille de texte du bouton
-                  ),
-                ),
-                const SizedBox(height: 10),
-                ElevatedButton.icon(
-                  onPressed: () async {
-                    try {
-                      await ComptabiliteService.updateCotisations();
-                      await ComptabiliteService.updateSolde();
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Comptabilité mise à jour !')), // Message mis à jour
-                      );
-                    } catch (e) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('Erreur lors de la mise à jour : $e')),
-                      );
-                    }
-                  },
-                  icon: const Icon(Icons.refresh),
-                  label: const Text('Mettre à jour Comptabilité'), // Texte du bouton mis à jour
-                  style: ElevatedButton.styleFrom(
-                    minimumSize: const Size(double.infinity, 50),
-                    textStyle: const TextStyle(fontSize: 16), // Taille de texte du bouton
-                  ),
-                ),
-                const SizedBox(height: 20),
-                const Text(
-                  'Historique des Transactions :',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                ),
-                // Ajustement de la hauteur du SizedBox pour l'historique
-                SizedBox(
-                  height: MediaQuery.of(context).size.height * 0.4, // Utiliser un pourcentage de la hauteur de l'écran
-                  child: StreamBuilder<QuerySnapshot>(
-                    stream: ComptabiliteService.getTransactions(),
-                    builder: (context, snapshot) {
-                      if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
-                      final transactions = snapshot.data!.docs;
-                      if (transactions.isEmpty) {
-                        return const Center(child: Text('Aucune transaction enregistrée.'));
-                      }
-                      return ListView.builder(
-                        physics: const NeverScrollableScrollPhysics(),
-                        itemCount: transactions.length,
-                        itemBuilder: (context, index) {
-                          final transaction = transactions[index];
-                          final data = transaction.data() as Map<String, dynamic>;
-                          final type = data['type'] ?? 'N/A';
-                          final description = data['description'] ?? 'N/A';
-                          final montant = (data['montant'] as num?)?.toDouble() ?? 0.0;
-                          final date = (data['date'] as Timestamp?)?.toDate();
-
-                          Color textColor = Colors.black87;
-                          if (type == 'depense') {
-                            textColor = Colors.red;
-                          } else if (type == 'cotisation') {
-                            textColor = Colors.green;
-                          }
-
-                          return Card(
-                            margin: const EdgeInsets.symmetric(vertical: 4),
-                            child: ListTile(
-                              leading: Icon(
-                                type == 'depense' ? Icons.remove_circle : Icons.add_circle,
-                                color: textColor,
-                              ),
-                              title: Text(
-                                description,
-                                style: TextStyle(color: textColor, fontSize: 15), // Taille de texte ajustée
-                              ),
-                              subtitle: Text(
-                                date != null ? DateFormat('dd/MM/yyyy HH:mm').format(date) : 'Date inconnue',
-                                style: const TextStyle(fontSize: 12), // Taille de texte ajustée
-                              ),
-                              trailing: Text(
-                                '${NumberFormat.currency(locale: 'fr_FR', symbol: 'DH').format(montant)}',
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  color: textColor,
-                                  fontSize: 16, // Taille de texte ajustée
-                                ),
-                              ),
-                            ),
-                          );
-                        },
-                      );
-                    },
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
       ),
     );
   }
